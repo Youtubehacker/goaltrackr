@@ -1,18 +1,46 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Calculator, TrendingUp, Share2, Target, Calendar, DollarSign, Sparkles } from 'lucide-react';
+import { Calculator, TrendingUp, Share2, Target, Sparkles } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+// Type definitions
+interface Results {
+  months: number;
+  completionDate: Date;
+  totalContributions: number;
+  totalGrowth: number;
+  message: string;
+}
+
+interface ChartData {
+  month: number;
+  balance: number;
+  goal?: number;
+}
+
 export default function Page() {
-  const [goalName, setGoalName] = useState('');
-  const [goalAmount, setGoalAmount] = useState('');
-  const [currentAmount, setCurrentAmount] = useState('');
-  const [monthlyContribution, setMonthlyContribution] = useState('');
-  const [annualGrowthRate, setAnnualGrowthRate] = useState('0');
-  const [results, setResults] = useState(null);
-  const [chartData, setChartData] = useState([]);
-  const canvasRef = useRef(null);
+  const [goalName, setGoalName] = useState<string>('');
+  const [goalAmount, setGoalAmount] = useState<string>('');
+  const [currentAmount, setCurrentAmount] = useState<string>('');
+  const [monthlyContribution, setMonthlyContribution] = useState<string>('');
+  const [annualGrowthRate, setAnnualGrowthRate] = useState<string>('0');
+  const [results, setResults] = useState<Results | null>(null);
+  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const calculateMonthsToGoal = (goal: number, current: number, monthly: number, annualRate: number): number => {
+    const monthlyRate = annualRate / 100 / 12;
+    let balance = current;
+    let months = 0;
+
+    while (balance < goal && months < 1200) {
+      months++;
+      const interest = balance * monthlyRate;
+      balance = balance + monthly + interest;
+    }
+    return months;
+  };
 
   const calculateGoal = () => {
     const goal = parseFloat(goalAmount) || 0;
@@ -35,7 +63,7 @@ export default function Page() {
     let balance = current;
     let months = 0;
     let totalContributions = 0;
-    const data = [{month: 0, balance: current}];
+    const data: ChartData[] = [{month: 0, balance: current}];
 
     while (balance < goal && months < 1200) {
       months++;
@@ -82,26 +110,13 @@ export default function Page() {
     setChartData(data);
   };
 
-  const calculateMonthsToGoal = (goal, current, monthly, annualRate) => {
-    const monthlyRate = annualRate / 100 / 12;
-    let balance = current;
-    let months = 0;
-
-    while (balance < goal && months < 1200) {
-      months++;
-      const interest = balance * monthlyRate;
-      balance = balance + monthly + interest;
-    }
-    return months;
-  };
-
   useEffect(() => {
     if (goalAmount && currentAmount && monthlyContribution) {
       calculateGoal();
     }
-  }, [monthlyContribution, annualGrowthRate]);
+  }, [goalAmount, currentAmount, monthlyContribution, annualGrowthRate]);
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -109,7 +124,7 @@ export default function Page() {
     }).format(amount);
   };
 
-  const formatDate = (date) => {
+  const formatDate = (date: Date): string => {
     return new Intl.DateTimeFormat('en-US', { 
       month: 'long', 
       year: 'numeric' 
@@ -121,18 +136,22 @@ export default function Page() {
     if (!canvas || !results) return;
 
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
     const width = 1200;
     const height = 630;
     
     canvas.width = width;
     canvas.height = height;
 
+    // Background gradient
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, '#1e293b');
     gradient.addColorStop(1, '#334155');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
+    // Pattern
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
     for (let i = 0; i < width; i += 30) {
       ctx.beginPath();
@@ -141,18 +160,22 @@ export default function Page() {
       ctx.stroke();
     }
 
+    // Title
     ctx.fillStyle = '#60a5fa';
     ctx.font = 'bold 48px system-ui, -apple-system, sans-serif';
     ctx.fillText('🎯 GoalTrackr', 60, 80);
 
+    // Goal name
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
     ctx.fillText(goalName || 'My Financial Goal', 60, 160);
 
+    // Goal amount
     ctx.fillStyle = '#60a5fa';
     ctx.font = 'bold 64px system-ui, -apple-system, sans-serif';
-    ctx.fillText(formatCurrency(goalAmount), 60, 240);
+    ctx.fillText(formatCurrency(parseFloat(goalAmount) || 0), 60, 240);
 
+    // Progress bar
     const barX = 60;
     const barY = 280;
     const barWidth = width - 120;
@@ -172,7 +195,9 @@ export default function Page() {
     ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
     ctx.fillText(`${progressPercentage.toFixed(0)}% Complete`, barX + barWidth / 2 - 80, barY + barHeight + 40);
 
+    // Download
     canvas.toBlob((blob) => {
+      if (!blob) return;
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = `goaltrackr-${goalName.replace(/\s+/g, '-').toLowerCase()}.png`;
@@ -181,9 +206,6 @@ export default function Page() {
       URL.revokeObjectURL(url);
     });
   };
-
-  const progressPercentage = results ? 
-    Math.min(100, ((parseFloat(currentAmount) || 0) / (parseFloat(goalAmount) || 1)) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
@@ -387,7 +409,7 @@ export default function Page() {
                     tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                   />
                   <Tooltip 
-                    formatter={(value) => formatCurrency(value)}
+                    formatter={(value) => formatCurrency(value as number)}
                     labelFormatter={(month) => `Month ${month}`}
                   />
                   <Legend />
