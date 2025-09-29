@@ -1,1244 +1,615 @@
-{/* Chart */}
-              {chartData.length > 0 && (
-                <div className={`mt-8 pt-8 border-t-2 ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>
-                  <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'} mb-6`}>Projected Growth</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#475569' : '#e2e8f0'} />
-                      <XAxis 
-                        dataKey="month" 
-                        label={{ value: 'Months', position: 'insideBottom', offset: -5, fill: darkMode ? '#94a3b8' : '#64748b' }}
-                        stroke={darkMode ? '#94a3b8' : '#64748b'}
-                      />
-                      <YAxis 
-                        stroke={darkMode ? '#94a3b8' : '#64748b'}
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(month) => `Month ${month}`}
-                        contentStyle={{ 
-                          backgroundColor: darkMode ? '#1e293b' : '#f8fafc', 
-                          border: `1px solid ${darkMode ? '#475569' : '#e2e8f0'}`,
-                          borderRadius: '8px'
-                        }}
-                        itemStyle={{ color: darkMode ? '#e2e8f0' : '#1e293b' }}
-                        labelStyle={{ color: darkMode ? '#e2e8f0' : '#1e293b' }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="balance" 
-                        stroke="#3b82f6" 
-                        fillOpacity={1}
-                        fill="url(#colorBalance)"
-                        strokeWidth={2}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="goal" 
-                        stroke="#10b981" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+'use client';
 
-        {/* Debt Calculator */}
-        {calculatorMode === 'debt' && (
-          <div className={`${darkMode ? 'bg-slate-800/50 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-xl overflow-hidden transition-colors duration-300`}>
-            <div className="bg-gradient-to-r from-red-500 to-pink-600 p-6">
-              <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center gap-3">
-                <CreditCard className="w-7 h-7" />
-                Debt Payoff Calculator
-              </h2>
-            </div>
-
-            <div className="p-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Input Section */}
-                <div className="space-y-6">
-                  <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'} flex items-center gap-2`}>
-                    <Calculator className="w-6 h-6 text-red-500" />
-                    Debt Details
-                  </h2>
-
-                  <div>
-                    <label className={`block text-sm font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'} mb-2`}>
-                      Debt Name
-                    </label>
-                    <input
-                      type="text"
-                      value={debtName}
-                      onChange={(e) => setDebtName(e.target.value)}
-                      placeholder="e.g., Credit Card, Student Loan"
-                      className={`w-full px-4 py-3 rounded-lg border-2 ${
-                        darkMode 
-                          ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-red-400' 
-                          : 'bg-white border-slate-200 text-slate-900 focus:border-red-500'
-                      } focus:ring-4 focus:ring-red-100/30 transition-all outline-none`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'} mb-2`}>
-                      Current Balance ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={debtAmount}
-                      onChange={(e) => setDebtAmount(e.target.value)}
-                      placeholder="10000"
-                      className={`w-full px-4 py-3 rounded-lg border-2 ${
-                        darkMode 
-                          ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-red-400' 
-                          : 'bg-white border-slate-200 text-slate-900 focus:border-red-500'
-                      } focus:ring-4 focus:ring-red-100/30 transition-all outline-none`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`block text-sm font-semibold ${darkMode ? 'text-slate-300' : 'text-slate-700'} mb-2`}>
-                      Interest Rate (% APR)
-                    </label>
-                    <input'use client';
-
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Calculator, 
-  TrendingUp, 
-  Share2, 
-  Target, 
-  Sparkles,
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Calculator,
+  TrendingUp,
+  Share2,
+  Target,
   Calendar,
   DollarSign,
-  PiggyBank,
-  CreditCard,
-  ToggleLeft,
-  ToggleRight,
-  Trophy,
-  Zap,
-  ArrowRight,
-  CheckCircle,
+  Sparkles,
+  Sun,
   Moon,
-  Sun
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
-// Type definitions
-interface SavingsResults {
+type Results = {
   months: number;
   completionDate: Date;
   totalContributions: number;
   totalGrowth: number;
-  message: string;
-  milestones: Milestone[];
+  monthlySeries: { date: string; value: number }[];
+  percentComplete?: number;
+};
+
+type Mode = 'forward' | 'reverse' | 'debt';
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
 }
 
-interface ReverseResults {
-  requiredMonthly: number;
-  totalContributions: number;
-  totalGrowth: number;
-  message: string;
+function addMonths(date: Date, months: number) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
 }
 
-interface DebtResults {
-  months: number;
-  payoffDate: Date;
-  totalPaid: number;
-  totalInterest: number;
-  savingsWithExtra: number;
-  monthsSaved: number;
-  message: string;
+function money(num: number) {
+  return num.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
-
-interface ChartData {
-  month: number;
-  balance: number;
-  goal?: number;
-  principal?: number;
-}
-
-interface Milestone {
-  percentage: number;
-  amount: number;
-  label: string;
-  reached: boolean;
-}
-
-type CalculatorMode = 'savings' | 'debt';
-type SavingsMode = 'timeToGoal' | 'monthlyNeeded';
 
 export default function Page() {
-  // Dark mode state
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  
-  // Main mode toggle
-  const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>('savings');
-  
-  // Savings calculator states
-  const [savingsMode, setSavingsMode] = useState<SavingsMode>('timeToGoal');
-  const [goalName, setGoalName] = useState<string>('');
-  const [goalAmount, setGoalAmount] = useState<string>('');
-  const [currentAmount, setCurrentAmount] = useState<string>('');
-  const [monthlyContribution, setMonthlyContribution] = useState<string>('');
-  const [targetDate, setTargetDate] = useState<string>('');
-  const [annualGrowthRate, setAnnualGrowthRate] = useState<string>('7');
-  const [savingsResults, setSavingsResults] = useState<SavingsResults | null>(null);
-  const [reverseResults, setReverseResults] = useState<ReverseResults | null>(null);
-  const [chartData, setChartData] = useState<ChartData[]>([]);
-  
-  // Debt calculator states
-  const [debtName, setDebtName] = useState<string>('');
-  const [debtAmount, setDebtAmount] = useState<string>('');
-  const [interestRate, setInterestRate] = useState<string>('');
-  const [minimumPayment, setMinimumPayment] = useState<string>('');
-  const [extraPayment, setExtraPayment] = useState<string>('0');
-  const [debtResults, setDebtResults] = useState<DebtResults | null>(null);
-  const [debtChartData, setDebtChartData] = useState<ChartData[]>([]);
-  
-  // Share card ref
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // UI / app state
+  const [mode, setMode] = useState<Mode>('forward');
+  const [dark, setDark] = useState<boolean>(false);
 
-  // Calculate milestones
-  const calculateMilestones = (current: number, goal: number): Milestone[] => {
-    const percentComplete = (current / goal) * 100;
-    const milestones: Milestone[] = [
-      { percentage: 25, amount: goal * 0.25, label: 'Quarter Way', reached: percentComplete >= 25 },
-      { percentage: 50, amount: goal * 0.50, label: 'Halfway There', reached: percentComplete >= 50 },
-      { percentage: 75, amount: goal * 0.75, label: 'Final Stretch', reached: percentComplete >= 75 },
-      { percentage: 100, amount: goal, label: 'Goal Achieved', reached: percentComplete >= 100 }
-    ];
-    return milestones;
-  };
+  // Goal input state (used in forward & reverse)
+  const [goalName, setGoalName] = useState('My Goal');
+  const [goalAmount, setGoalAmount] = useState<number>(10000);
+  const [currentAmount, setCurrentAmount] = useState<number>(1000);
+  const [monthlyContribution, setMonthlyContribution] = useState<number>(200);
+  const [annualGrowth, setAnnualGrowth] = useState<number>(0.05); // 5%
+  const [useGrowth, setUseGrowth] = useState<boolean>(true);
 
-  // Calculate time to goal
-  const calculateTimeToGoal = () => {
-    const goal = parseFloat(goalAmount) || 0;
-    const current = parseFloat(currentAmount) || 0;
-    const monthly = parseFloat(monthlyContribution) || 0;
-    const annualRate = parseFloat(annualGrowthRate) || 0;
-    const monthlyRate = annualRate / 100 / 12;
+  // Reverse-mode: target date
+  const [targetDate, setTargetDate] = useState<string>(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString().slice(0, 10);
+  });
 
-    if (goal <= current) {
-      setSavingsResults({
-        months: 0,
-        completionDate: new Date(),
-        totalContributions: 0,
-        totalGrowth: 0,
-        message: "🎉 Congratulations! You've already reached your goal!",
-        milestones: calculateMilestones(current, goal)
-      });
-      return;
-    }
+  // Debt mode inputs
+  const [debtBalance, setDebtBalance] = useState<number>(5000);
+  const [debtInterest, setDebtInterest] = useState<number>(0.18); // 18% APR
+  const [debtMonthly, setDebtMonthly] = useState<number>(150);
+  const [debtExtra, setDebtExtra] = useState<number>(0);
 
-    let balance = current;
-    let months = 0;
-    let totalContributions = 0;
-    const data: ChartData[] = [{month: 0, balance: current, goal: goal}];
+  // Results
+  const [results, setResults] = useState<Results | null>(null);
 
-    while (balance < goal && months < 1200) {
-      months++;
-      const interest = balance * monthlyRate;
-      balance = balance + monthly + interest;
-      totalContributions += monthly;
-      
-      if (months <= 60 || months % 6 === 0) {
-        data.push({
-          month: months,
-          balance: Math.round(balance),
-          goal: goal
-        });
-      }
-    }
+  // UI refs for share image
+  const shareRef = useRef<HTMLDivElement | null>(null);
 
-    const completionDate = new Date();
-    completionDate.setMonth(completionDate.getMonth() + months);
+  // Accessibility: focus main when mode changes
+  useEffect(() => {
+    const el = document.getElementById('main-heading');
+    el?.focus();
+  }, [mode]);
 
-    let message = '';
-    const progressPercent = ((current / goal) * 100).toFixed(1);
-    
-    if (months <= 12) {
-      message = `🚀 Amazing! You're ${progressPercent}% there and will reach your goal in under a year!`;
-    } else if (months <= 36) {
-      message = `💪 Great plan! You're ${progressPercent}% complete. Keep it up for ${Math.round(months)} months!`;
+  // Theme toggle: apply to html body class if you want global effect
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add('theme-dark');
     } else {
-      message = `🎯 You're ${progressPercent}% of the way there! Stay consistent for ${Math.round(months / 12)} years!`;
+      document.documentElement.classList.remove('theme-dark');
     }
+  }, [dark]);
 
-    setSavingsResults({
+  // Calculation helpers
+  function computeForward(): Results {
+    // If no growth or growth disabled, treat as simple linear contributions
+    const monthlyRate = useGrowth ? Math.pow(1 + annualGrowth, 1 / 12) - 1 : 0;
+    let balance = currentAmount;
+    const monthlySeries: { date: string; value: number }[] = [];
+    let months = 0;
+
+    // Safety cap: avoid infinite loop
+    const cap = 1200; // 100 years granularity
+    while (balance < goalAmount && months < cap) {
+      months++;
+      // contribution first
+      balance += monthlyContribution;
+      // then growth
+      if (monthlyRate > 0) {
+        balance = balance * (1 + monthlyRate);
+      }
+      const d = addMonths(new Date(), months);
+      monthlySeries.push({ date: formatDate(d), value: Math.max(0, Math.round(balance)) });
+    }
+    const completionDate = addMonths(new Date(), months);
+    const totalContributions = currentAmount + monthlyContribution * months;
+    const totalGrowth = Math.max(0, Math.round((monthlySeries.length ? monthlySeries[monthlySeries.length - 1].value : balance) - totalContributions));
+    const percentComplete = Math.min(100, Math.round((currentAmount / goalAmount) * 100));
+    return {
       months,
       completionDate,
       totalContributions,
-      totalGrowth: Math.round(balance - current - totalContributions),
-      message,
-      milestones: calculateMilestones(current, goal)
-    });
-    
-    setChartData(data);
-  };
+      totalGrowth,
+      monthlySeries,
+      percentComplete,
+    };
+  }
 
-  // Calculate required monthly savings
-  const calculateMonthlyNeeded = () => {
-    const goal = parseFloat(goalAmount) || 0;
-    const current = parseFloat(currentAmount) || 0;
-    const annualRate = parseFloat(annualGrowthRate) || 0;
-    const monthlyRate = annualRate / 100 / 12;
-    
-    if (!targetDate) return;
-    
+  function computeReverse(): Results {
     const target = new Date(targetDate);
-    const today = new Date();
-    const monthsAvailable = Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24 * 30));
-    
-    if (monthsAvailable <= 0) {
-      setReverseResults({
-        requiredMonthly: 0,
-        totalContributions: 0,
-        totalGrowth: 0,
-        message: "⚠️ Please select a future date for your goal!"
-      });
-      return;
+    if (isNaN(target.getTime())) {
+      // fallback to forward if invalid
+      return computeForward();
     }
-
-    // Calculate required monthly payment using formula
-    let requiredMonthly: number;
-    if (monthlyRate === 0) {
-      requiredMonthly = (goal - current) / monthsAvailable;
+    // months between now and target:
+    const now = new Date();
+    const monthsDiff = Math.max(0, (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth()));
+    // handle same month -> 0 => treat as 1 month
+    const months = Math.max(1, monthsDiff);
+    // compute needed monthly contribution to reach goal given growth and current
+    const monthlyRate = useGrowth ? Math.pow(1 + annualGrowth, 1 / 12) - 1 : 0;
+    // future value formula for series contributions:
+    // FV = current * (1+r)^n + PMT * [((1+r)^n -1)/r] * (1+r)   (using contribution at beginning/end conventions; we'll use contribution at start of period)
+    // Solve for PMT:
+    // PMT = (FV - current*(1+r)^n) * r / [((1+r)^n -1)]
+    const fv = goalAmount;
+    const cur = currentAmount;
+    const r = monthlyRate;
+    const n = months;
+    let required = 0;
+    if (r === 0) {
+      required = Math.max(0, Math.ceil((fv - cur) / n));
     } else {
-      const futureValueNeeded = goal - current * Math.pow(1 + monthlyRate, monthsAvailable);
-      requiredMonthly = futureValueNeeded / ((Math.pow(1 + monthlyRate, monthsAvailable) - 1) / monthlyRate);
+      const factor = Math.pow(1 + r, n);
+      required = Math.max(0, Math.ceil(((fv - cur * factor) * r) / (factor - 1)));
     }
 
-    requiredMonthly = Math.max(0, requiredMonthly);
-    const totalContributions = requiredMonthly * monthsAvailable;
-    const totalGrowth = goal - current - totalContributions;
-
-    // Generate chart data
-    let balance = current;
-    const data: ChartData[] = [{month: 0, balance: current, goal: goal}];
-    
-    for (let month = 1; month <= monthsAvailable; month++) {
-      const interest = balance * monthlyRate;
-      balance = balance + requiredMonthly + interest;
-      
-      if (month <= 60 || month % Math.ceil(monthsAvailable / 20) === 0) {
-        data.push({
-          month: month,
-          balance: Math.round(balance),
-          goal: goal
-        });
-      }
+    // Build monthly series using the computed required contribution
+    let balance = currentAmount;
+    const monthlySeries: { date: string; value: number }[] = [];
+    for (let m = 1; m <= months; m++) {
+      balance += required;
+      if (r > 0) balance = balance * (1 + r);
+      monthlySeries.push({ date: formatDate(addMonths(new Date(), m)), value: Math.round(balance) });
     }
-    
-    setChartData(data);
-
-    let message = '';
-    if (requiredMonthly <= 500) {
-      message = `✨ Very achievable! Just ${formatCurrency(requiredMonthly)} per month gets you there!`;
-    } else if (requiredMonthly <= 1500) {
-      message = `💪 You can do this! Set aside ${formatCurrency(requiredMonthly)} monthly to reach your goal!`;
-    } else {
-      message = `🎯 Ambitious goal! Consider extending your timeline to reduce the monthly amount.`;
-    }
-
-    setReverseResults({
-      requiredMonthly,
+    const totalContributions = currentAmount + required * months;
+    const totalGrowth = Math.max(0, Math.round((monthlySeries.length ? monthlySeries[monthlySeries.length - 1].value : balance) - totalContributions));
+    return {
+      months,
+      completionDate: addMonths(new Date(), months),
       totalContributions,
       totalGrowth,
-      message
-    });
-  };
+      monthlySeries,
+      percentComplete: Math.min(100, Math.round((currentAmount / goalAmount) * 100)),
+    };
+  }
 
-  // Calculate debt payoff
-  const calculateDebtPayoff = () => {
-    const principal = parseFloat(debtAmount) || 0;
-    const apr = parseFloat(interestRate) || 0;
-    const monthlyRate = apr / 100 / 12;
-    const payment = parseFloat(minimumPayment) || 0;
-    const extra = parseFloat(extraPayment) || 0;
-    const totalPayment = payment + extra;
-
-    if (totalPayment <= principal * monthlyRate) {
-      setDebtResults({
-        months: 0,
-        payoffDate: new Date(),
-        totalPaid: 0,
-        totalInterest: 0,
-        savingsWithExtra: 0,
-        monthsSaved: 0,
-        message: "⚠️ Your payment needs to be higher than the monthly interest to pay off the debt!"
-      });
-      return;
-    }
-
-    // Calculate with regular payment
-    let balance = principal;
+  function computeDebt(): Results {
+    // Debt payoff using amortization steps. Extra payment included.
+    const monthlyRate = debtInterest / 12;
+    let balance = debtBalance;
+    const monthlySeries: { date: string; value: number }[] = [];
     let months = 0;
-    let totalPaid = 0;
-    let totalInterest = 0;
-    const data: ChartData[] = [{month: 0, balance: principal, principal: principal}];
-
-    while (balance > 0.01 && months < 600) {
+    const cap = 600; // 50 years
+    while (balance > 0.5 && months < cap) {
       months++;
-      const interestCharge = balance * monthlyRate;
-      const principalPayment = Math.min(totalPayment - interestCharge, balance);
-      balance -= principalPayment;
-      totalPaid += totalPayment;
-      totalInterest += interestCharge;
-
-      if (months <= 60 || months % Math.ceil(months / 20) === 0) {
-        data.push({
-          month: months,
-          balance: Math.max(0, Math.round(balance)),
-          principal: Math.round(principal - totalInterest)
-        });
+      // interest accrues
+      const interest = balance * monthlyRate;
+      balance += interest;
+      // payment
+      const payment = Math.min(balance, debtMonthly + debtExtra);
+      balance -= payment;
+      monthlySeries.push({ date: formatDate(addMonths(new Date(), months)), value: Math.round(Math.max(0, balance)) });
+      // safety break if payment does not cover interest (avoid infinite loop)
+      if (payment <= interest && balance > 0) {
+        // make a forced payment increase
+        balance -= 0.0001;
       }
     }
-
-    // Calculate without extra payment for comparison
-    let monthsWithoutExtra = 0;
-    let balanceWithoutExtra = principal;
-    
-    if (extra > 0) {
-      while (balanceWithoutExtra > 0.01 && monthsWithoutExtra < 600) {
-        monthsWithoutExtra++;
-        const interestCharge = balanceWithoutExtra * monthlyRate;
-        const principalPayment = Math.min(payment - interestCharge, balanceWithoutExtra);
-        balanceWithoutExtra -= principalPayment;
-      }
-    }
-
-    const payoffDate = new Date();
-    payoffDate.setMonth(payoffDate.getMonth() + months);
-
-    const monthsSaved = extra > 0 ? monthsWithoutExtra - months : 0;
-    const savingsWithExtra = extra > 0 ? (monthsWithoutExtra - months) * payment : 0;
-
-    let message = '';
-    if (extra > 0 && monthsSaved > 0) {
-      message = `🎯 Great strategy! Your extra ${formatCurrency(extra)}/month saves you ${monthsSaved} months and ${formatCurrency(savingsWithExtra)} in payments!`;
-    } else if (months <= 24) {
-      message = `🚀 Excellent! You'll be debt-free in just ${months} months!`;
-    } else {
-      message = `💪 Stay consistent! You'll eliminate this debt in ${Math.round(months / 12)} years.`;
-    }
-
-    setDebtResults({
+    const completionDate = addMonths(new Date(), months);
+    const totalContributions = (debtMonthly + debtExtra) * months;
+    const totalGrowth = Math.round(Math.max(0, (debtBalance - (monthlySeries.length ? monthlySeries[monthlySeries.length - 1].value : 0))));
+    const percentComplete = Math.min(100, Math.round(((debtBalance - (monthlySeries.length ? monthlySeries[monthlySeries.length - 1].value : 0)) / debtBalance) * 100));
+    return {
       months,
-      payoffDate,
-      totalPaid,
-      totalInterest,
-      savingsWithExtra,
-      monthsSaved,
-      message
-    });
+      completionDate,
+      totalContributions,
+      totalGrowth,
+      monthlySeries,
+      percentComplete,
+    };
+  }
 
-    setDebtChartData(data);
-  };
+  // Main compute entry
+  function calculate() {
+    try {
+      if (mode === 'forward') {
+        setResults(computeForward());
+      } else if (mode === 'reverse') {
+        setResults(computeReverse());
+      } else {
+        setResults(computeDebt());
+      }
+    } catch (e) {
+      console.error('Calculation error', e);
+      setResults(null);
+    }
+  }
 
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  // When inputs change, update quickly (debounce would be nicer but keep simple)
+  useEffect(() => {
+    // small auto-calc so demo is smooth
+    calculate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, goalAmount, currentAmount, monthlyContribution, annualGrowth, useGrowth, targetDate, debtBalance, debtInterest, debtMonthly, debtExtra]);
 
-  // Format date
-  const formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('en-US', { 
-      month: 'long', 
-      year: 'numeric' 
-    }).format(date);
-  };
-
-  // Generate share card
-  const generateShareCard = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
+  // Shareable image generator (simple canvas)
+  async function generateShareImage() {
+    if (!shareRef.current || !results) return;
+    const el = shareRef.current;
+    // compute size
     const width = 1200;
     const height = 630;
-    
+    const canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-
-    // Gradient background
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, '#0f172a');
-    gradient.addColorStop(1, '#1e293b');
-    ctx.fillStyle = gradient;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    // background
+    if (dark) {
+      ctx.fillStyle = '#0f172a'; // slate-900
+    } else {
+      ctx.fillStyle = '#ffffff';
+    }
     ctx.fillRect(0, 0, width, height);
 
-    // Decorative elements
-    ctx.strokeStyle = 'rgba(59, 130, 246, 0.1)';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.arc(width - 150, height - 150, 50 + i * 30, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
     // Title
-    ctx.fillStyle = '#3b82f6';
-    ctx.font = 'bold 56px system-ui, -apple-system, sans-serif';
-    ctx.fillText('💰 GoalTrackr Pro', 60, 90);
+    ctx.fillStyle = dark ? '#e6eef8' : '#0b1b2b';
+    ctx.font = 'bold 48px Inter, Arial, sans-serif';
+    ctx.fillText(goalName, 60, 100);
 
-    // Goal info
-    if (calculatorMode === 'savings' && savingsResults) {
-      const goal = parseFloat(goalAmount) || 0;
-      const current = parseFloat(currentAmount) || 0;
-      const progress = (current / goal) * 100;
+    // Subtitle info
+    ctx.font = '28px Inter, Arial, sans-serif';
+    ctx.fillText(`Completion: ${formatDate(results.completionDate)}`, 60, 160);
+    ctx.fillText(`Time: ${results.months} months`, 60, 200);
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
-      ctx.fillText(goalName || 'Financial Goal', 60, 180);
+    // Progress bar
+    const progress = results.percentComplete ?? 0;
+    const barX = 60;
+    const barY = 240;
+    const barW = 1080;
+    const barH = 40;
+    // background bar
+    ctx.fillStyle = dark ? '#1f2937' : '#e6eef8';
+    ctx.fillRect(barX, barY, barW, barH);
+    // fill
+    ctx.fillStyle = '#0ea5a4'; // teal-400
+    ctx.fillRect(barX, barY, (progress / 100) * barW, barH);
+    ctx.font = '22px Inter, Arial, sans-serif';
+    ctx.fillStyle = dark ? '#e6eef8' : '#0b1b2b';
+    ctx.fillText(`${progress}% complete`, barX + 10, barY + 30);
 
-      ctx.fillStyle = '#60a5fa';
-      ctx.font = 'bold 72px system-ui, -apple-system, sans-serif';
-      ctx.fillText(formatCurrency(goal), 60, 270);
+    // Small footer text
+    ctx.font = '18px Inter, Arial, sans-serif';
+    ctx.fillStyle = dark ? '#9aa7b3' : '#475569';
+    ctx.fillText('Generated with GoalTrackr', 60, height - 40);
 
-      // Progress bar
-      const barX = 60;
-      const barY = 320;
-      const barWidth = width - 120;
-      const barHeight = 50;
+    // download
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${goalName.replace(/\s+/g, '_')}_progress.png`;
+    a.click();
+  }
 
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.fillRect(barX, barY, barWidth, barHeight);
+  // Small helper for growth rate slider display
+  function growthLabel(rate: number) {
+    if (rate === 0) return '0% (No Growth)';
+    return `${Math.round(rate * 100)}%`;
+  }
 
-      const progressGradient = ctx.createLinearGradient(barX, barY, barX + barWidth * (progress / 100), barY);
-      progressGradient.addColorStop(0, '#3b82f6');
-      progressGradient.addColorStop(1, '#10b981');
-      ctx.fillStyle = progressGradient;
-      ctx.fillRect(barX, barY, barWidth * (progress / 100), barHeight);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${progress.toFixed(1)}% Complete`, barX + barWidth / 2 - 100, barY + barHeight + 45);
-
-      // Stats
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '24px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`Target Date: ${formatDate(savingsResults.completionDate)}`, 60, 480);
-      ctx.fillText(`Monthly Savings: ${formatCurrency(parseFloat(monthlyContribution) || 0)}`, 60, 520);
-
-      // Motivational message
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'italic 28px system-ui, -apple-system, sans-serif';
-      ctx.fillText(savingsResults.message.substring(0, 50) + '...', 60, 580);
-    }
-
-    // Download
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `goaltrackr-${(goalName || debtName || 'goal').replace(/\s+/g, '-').toLowerCase()}.png`;
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
-    });
-  };
-
-  // Initialize dark mode from system preference
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDark);
-    }
-  }, []);
-
-  // Auto-calculate effects
-  useEffect(() => {
-    if (savingsMode === 'timeToGoal' && goalAmount && currentAmount && monthlyContribution) {
-      calculateTimeToGoal();
-    }
-  }, [goalAmount, currentAmount, monthlyContribution, annualGrowthRate, savingsMode]);
-
-  useEffect(() => {
-    if (savingsMode === 'monthlyNeeded' && goalAmount && currentAmount && targetDate) {
-      calculateMonthlyNeeded();
-    }
-  }, [goalAmount, currentAmount, targetDate, annualGrowthRate, savingsMode]);
-
-  useEffect(() => {
-    if (debtAmount && interestRate && minimumPayment) {
-      calculateDebtPayoff();
-    }
-  }, [debtAmount, interestRate, minimumPayment, extraPayment]);
+  // small UI bits
+  const primaryBtn = 'inline-flex items-center gap-2 px-4 py-2 rounded-md shadow-sm text-white';
+  const primaryBg = dark ? 'bg-teal-500 hover:bg-teal-600' : 'bg-sky-600 hover:bg-sky-700';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
-                <Target className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900">GoalTrackr Pro</h1>
-                <p className="text-sm text-slate-600">Financial Planning Made Simple</p>
-              </div>
+    <main className={`min-h-screen py-8 ${dark ? 'bg-slate-900 text-slate-100' : 'bg-gray-50 text-slate-900'} px-4`}>
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="bg-gradient-to-r from-sky-500 to-teal-400 p-2 rounded-lg text-white">
+              <Calculator size={28} />
+            </div>
+            <div>
+              <h1 id="main-heading" tabIndex={-1} className="text-2xl font-bold">GoalTrackr</h1>
+              <p className="text-sm text-slate-400">Plan your savings, pay off debt, and stay motivated.</p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Mode Selector */}
-        <div className="flex flex-wrap gap-4 mb-8 justify-center">
-          <button
-            onClick={() => setCalculatorMode('savings')}
-            className={`flex items-center gap-3 px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 ${
-              calculatorMode === 'savings'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg'
-                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-blue-400'
-            }`}
-          >
-            <PiggyBank className="w-5 h-5" />
-            Savings Goal
-          </button>
-          <button
-            onClick={() => setCalculatorMode('debt')}
-            className={`flex items-center gap-3 px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 ${
-              calculatorMode === 'debt'
-                ? 'bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg'
-                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-red-400'
-            }`}
-          >
-            <CreditCard className="w-5 h-5" />
-            Debt Payoff
-          </button>
-        </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setDark(!dark)}
+              title="Toggle theme"
+              className={`p-2 rounded-md ${dark ? 'bg-slate-700 text-yellow-300' : 'bg-white text-slate-700 shadow-sm'}`}
+            >
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
-        {/* Savings Calculator */}
-        {calculatorMode === 'savings' && (
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            {/* Savings Mode Toggle */}
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button
-                  onClick={() => setSavingsMode('timeToGoal')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                    savingsMode === 'timeToGoal'
-                      ? 'bg-white text-blue-600'
-                      : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  When will I reach my goal?
-                </button>
-                <div className="text-white">
-                  {savingsMode === 'timeToGoal' ? <ToggleLeft className="w-6 h-6" /> : <ToggleRight className="w-6 h-6" />}
-                </div>
-                <button
-                  onClick={() => setSavingsMode('monthlyNeeded')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                    savingsMode === 'monthlyNeeded'
-                      ? 'bg-white text-blue-600'
-                      : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
-                >
-                  <DollarSign className="w-4 h-4" />
-                  How much should I save monthly?
-                </button>
-              </div>
-            </div>
-
-            <div className="p-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Input Section */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <Calculator className="w-6 h-6 text-blue-500" />
-                    Goal Details
-                  </h2>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      What are you saving for?
-                    </label>
-                    <input
-                      type="text"
-                      value={goalName}
-                      onChange={(e) => setGoalName(e.target.value)}
-                      placeholder="e.g., Dream Home Down Payment"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Goal Amount ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={goalAmount}
-                      onChange={(e) => setGoalAmount(e.target.value)}
-                      placeholder="50000"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Current Savings ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={currentAmount}
-                      onChange={(e) => setCurrentAmount(e.target.value)}
-                      placeholder="5000"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
-
-                  {savingsMode === 'timeToGoal' ? (
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Monthly Contribution ($)
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="5000"
-                        step="50"
-                        value={monthlyContribution}
-                        onChange={(e) => setMonthlyContribution(e.target.value)}
-                        className="w-full mb-2"
-                      />
-                      <input
-                        type="number"
-                        value={monthlyContribution}
-                        onChange={(e) => setMonthlyContribution(e.target.value)}
-                        placeholder="500"
-                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-900"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                        Target Date
-                      </label>
-                      <input
-                        type="date"
-                        value={targetDate}
-                        onChange={(e) => setTargetDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-900"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Expected Annual Return (%)
-                    </label>
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <button
-                        onClick={() => setAnnualGrowthRate('0')}
-                        className={`py-2 px-3 rounded-lg font-medium transition-all ${
-                          annualGrowthRate === '0' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                      >
-                        Cash
-                        <span className="block text-xs opacity-75">0%</span>
-                      </button>
-                      <button
-                        onClick={() => setAnnualGrowthRate('4')}
-                        className={`py-2 px-3 rounded-lg font-medium transition-all ${
-                          annualGrowthRate === '4' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                      >
-                        HYSA
-                        <span className="block text-xs opacity-75">4%</span>
-                      </button>
-                      <button
-                        onClick={() => setAnnualGrowthRate('7')}
-                        className={`py-2 px-3 rounded-lg font-medium transition-all ${
-                          annualGrowthRate === '7' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                        }`}
-                      >
-                        Stocks
-                        <span className="block text-xs opacity-75">7%</span>
-                      </button>
-                    </div>
-                    <input
-                      type="number"
-                      value={annualGrowthRate}
-                      onChange={(e) => setAnnualGrowthRate(e.target.value)}
-                      step="0.1"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
-
-                  <button
-                    onClick={savingsMode === 'timeToGoal' ? calculateTimeToGoal : calculateMonthlyNeeded}
-                    className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Zap className="w-5 h-5" />
-                    Calculate My Plan
-                  </button>
-                </div>
-
-                {/* Results Section */}
-                <div className="space-y-6">
-                  {(savingsMode === 'timeToGoal' ? savingsResults : reverseResults) && (
-                    <>
-                      <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-green-500" />
-                        Your Results
-                      </h2>
-
-                      {savingsMode === 'timeToGoal' && savingsResults ? (
-                        <>
-                          {/* Progress Bar */}
-                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-sm font-semibold text-slate-700">Progress</span>
-                              <span className="text-2xl font-bold text-blue-600">
-                                {((parseFloat(currentAmount) / parseFloat(goalAmount)) * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${Math.min(100, (parseFloat(currentAmount) / parseFloat(goalAmount)) * 100)}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Key Metrics */}
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Calendar className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm text-slate-600">Target Date</span>
-                              </div>
-                              <p className="text-xl font-bold text-slate-900">
-                                {formatDate(savingsResults.completionDate)}
-                              </p>
-                              <p className="text-sm text-slate-500">{savingsResults.months} months</p>
-                            </div>
-
-                            <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <DollarSign className="w-4 h-4 text-green-500" />
-                                <span className="text-sm text-slate-600">Total Saved</span>
-                              </div>
-                              <p className="text-xl font-bold text-slate-900">
-                                {formatCurrency(savingsResults.totalContributions)}
-                              </p>
-                              <p className="text-sm text-green-600">
-                                +{formatCurrency(savingsResults.totalGrowth)} growth
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Milestones */}
-                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6">
-                            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                              <Trophy className="w-5 h-5 text-purple-500" />
-                              Milestones
-                            </h3>
-                            <div className="space-y-3">
-                              {savingsResults.milestones.map((milestone, index) => (
-                                <div key={index} className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                      milestone.reached 
-                                        ? 'bg-green-500 text-white' 
-                                        : 'bg-slate-200 text-slate-500'
-                                    }`}>
-                                      {milestone.reached ? (
-                                        <CheckCircle className="w-5 h-5" />
-                                      ) : (
-                                        <span className="text-xs font-bold">{milestone.percentage}%</span>
-                                      )}
-                                    </div>
-                                    <span className={`font-medium ${
-                                      milestone.reached ? 'text-slate-900' : 'text-slate-500'
-                                    }`}>
-                                      {milestone.label}
-                                    </span>
-                                  </div>
-                                  <span className={`text-sm font-semibold ${
-                                    milestone.reached ? 'text-green-600' : 'text-slate-400'
-                                  }`}>
-                                    {formatCurrency(milestone.amount)}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      ) : reverseResults ? (
-                        <div className="space-y-4">
-                          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
-                            <div className="text-center">
-                              <p className="text-sm text-slate-600 mb-2">Required Monthly Savings</p>
-                              <p className="text-5xl font-bold text-green-600">
-                                {formatCurrency(reverseResults.requiredMonthly)}
-                              </p>
-                              <p className="text-sm text-slate-500 mt-2">per month</p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
-                              <span className="text-sm text-slate-600">Total Contributions</span>
-                              <p className="text-xl font-bold text-slate-900">
-                                {formatCurrency(reverseResults.totalContributions)}
-                              </p>
-                            </div>
-                            <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
-                              <span className="text-sm text-slate-600">Investment Growth</span>
-                              <p className="text-xl font-bold text-green-600">
-                                +{formatCurrency(reverseResults.totalGrowth)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {/* Motivational Message */}
-                      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-200">
-                        <div className="flex items-start gap-3">
-                          <Sparkles className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
-                          <p className="text-slate-800 font-medium">
-                            {savingsMode === 'timeToGoal' ? savingsResults?.message : reverseResults?.message}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Share Button */}
-                      <button
-                        onClick={generateShareCard}
-                        className="w-full py-3 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Share2 className="w-5 h-5" />
-                        Share My Goal
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Chart */}
-              {chartData.length > 0 && (
-                <div className="mt-8 pt-8 border-t-2 border-slate-200">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6">Projected Growth</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis 
-                        dataKey="month" 
-                        label={{ value: 'Months', position: 'insideBottom', offset: -5 }}
-                        stroke="#64748b"
-                      />
-                      <YAxis 
-                        stroke="#64748b"
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(month) => `Month ${month}`}
-                        contentStyle={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="balance" 
-                        stroke="#3b82f6" 
-                        fillOpacity={1}
-                        fill="url(#colorBalance)"
-                        strokeWidth={2}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="goal" 
-                        stroke="#10b981" 
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                        dot={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => {
+                // quick share trigger; copy link behavior: open share dialog? just copy URL
+                if (typeof window !== 'undefined') {
+                  navigator.clipboard?.writeText(window.location.href);
+                  alert('Link copied to clipboard — share with friends!');
+                }
+              }}
+              title="Copy link"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white text-slate-800 shadow-sm"
+            >
+              <Share2 size={16} /> Share
+            </button>
           </div>
-        )}
+        </header>
 
-        {/* Debt Calculator */}
-        {calculatorMode === 'debt' && (
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-red-500 to-pink-600 p-6">
-              <h2 className="text-2xl font-bold text-white text-center flex items-center justify-center gap-3">
-                <CreditCard className="w-7 h-7" />
-                Debt Payoff Calculator
-              </h2>
-            </div>
+        {/* Mode toggle */}
+        <nav className="bg-transparent mb-6">
+          <div className="flex gap-2">
+            <button
+              className={`flex-1 rounded-md p-3 text-left ${mode === 'forward' ? `${primaryBg} text-white` : `bg-white text-slate-700 shadow-sm`} `}
+              onClick={() => setMode('forward')}
+            >
+              <div className="flex items-center gap-2"><TrendingUp size={16} /> Goal Calculator</div>
+              <div className="text-xs text-slate-200/80">When will I reach my target?</div>
+            </button>
+            <button
+              className={`flex-1 rounded-md p-3 text-left ${mode === 'reverse' ? `${primaryBg} text-white` : `bg-white text-slate-700 shadow-sm`} `}
+              onClick={() => setMode('reverse')}
+            >
+              <div className="flex items-center gap-2"><Calendar size={16} /> Reverse Mode</div>
+              <div className="text-xs text-slate-200/80">Set a date — find required monthly</div>
+            </button>
+            <button
+              className={`flex-1 rounded-md p-3 text-left ${mode === 'debt' ? `${primaryBg} text-white` : `bg-white text-slate-700 shadow-sm`} `}
+              onClick={() => setMode('debt')}
+            >
+              <div className="flex items-center gap-2"><DollarSign size={16} /> Debt Payoff</div>
+              <div className="text-xs text-slate-200/80">See payoff date & interest</div>
+            </button>
+          </div>
+        </nav>
 
-            <div className="p-8">
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* Input Section */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <Calculator className="w-6 h-6 text-red-500" />
-                    Debt Details
-                  </h2>
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Left pane - inputs */}
+          <div className="md:col-span-1 bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            {(mode === 'forward' || mode === 'reverse') && (
+              <>
+                <label className="block text-sm font-medium mb-1">Goal name</label>
+                <input
+                  value={goalName}
+                  onChange={(e) => setGoalName(e.target.value)}
+                  className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent"
+                />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Debt Name
-                    </label>
-                    <input
-                      type="text"
-                      value={debtName}
-                      onChange={(e) => setDebtName(e.target.value)}
-                      placeholder="e.g., Credit Card, Student Loan"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
+                <label className="block text-sm font-medium mt-3">Goal amount</label>
+                <input
+                  type="number"
+                  value={goalAmount}
+                  onChange={(e) => setGoalAmount(Number(e.target.value))}
+                  className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent"
+                />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Current Balance ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={debtAmount}
-                      onChange={(e) => setDebtAmount(e.target.value)}
-                      placeholder="10000"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
+                <label className="block text-sm font-medium mt-3">Current amount</label>
+                <input
+                  type="number"
+                  value={currentAmount}
+                  onChange={(e) => setCurrentAmount(Number(e.target.value))}
+                  className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent"
+                />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Interest Rate (% APR)
-                    </label>
-                    <input
-                      type="number"
-                      value={interestRate}
-                      onChange={(e) => setInterestRate(e.target.value)}
-                      placeholder="18.99"
-                      step="0.01"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
+                <label className="block text-sm font-medium mt-3">Monthly contribution</label>
+                <input
+                  type="number"
+                  value={monthlyContribution}
+                  onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+                  className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent"
+                />
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Minimum Monthly Payment ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={minimumPayment}
-                      onChange={(e) => setMinimumPayment(e.target.value)}
-                      placeholder="250"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all outline-none text-slate-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Extra Monthly Payment ($)
-                      <span className="text-xs text-slate-500 ml-2">(Optional)</span>
-                    </label>
+                <div className="mt-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={useGrowth} onChange={(e) => setUseGrowth(e.target.checked)} />
+                    <span>Apply annual growth rate</span>
+                  </label>
+                  <div className="mt-2 flex gap-2 items-center">
                     <input
                       type="range"
-                      min="0"
-                      max="1000"
-                      step="25"
-                      value={extraPayment}
-                      onChange={(e) => setExtraPayment(e.target.value)}
-                      className="w-full mb-2"
+                      min={0}
+                      max={0.2}
+                      step={0.005}
+                      value={annualGrowth}
+                      onChange={(e) => setAnnualGrowth(Number(e.target.value))}
+                      className="w-full"
                     />
+                    <div className="text-sm w-20 text-right">{growthLabel(annualGrowth)}</div>
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">Examples: 0% (cash), 4% (HYSA), 7% (stocks)</div>
+                </div>
+
+                {mode === 'reverse' && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-1">Target completion date</label>
                     <input
-                      type="number"
-                      value={extraPayment}
-                      onChange={(e) => setExtraPayment(e.target.value)}
-                      placeholder="0"
-                      className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all outline-none text-slate-900"
+                      type="date"
+                      value={targetDate}
+                      onChange={(e) => setTargetDate(e.target.value)}
+                      className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent"
                     />
                   </div>
+                )}
+              </>
+            )}
 
-                  <button
-                    onClick={calculateDebtPayoff}
-                    className="w-full py-4 bg-gradient-to-r from-red-500 to-pink-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Zap className="w-5 h-5" />
-                    Calculate Payoff Plan
-                  </button>
-                </div>
+            {mode === 'debt' && (
+              <>
+                <label className="block text-sm font-medium mb-1">Debt name</label>
+                <input className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent" placeholder="Credit Card / Loan" />
 
-                {/* Results Section */}
-                <div className="space-y-6">
-                  {debtResults && (
-                    <>
-                      <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-green-500" />
-                        Payoff Strategy
-                      </h2>
+                <label className="block text-sm font-medium mt-3">Balance</label>
+                <input type="number" value={debtBalance} onChange={(e) => setDebtBalance(Number(e.target.value))} className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent" />
 
-                      <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6">
-                        <div className="text-center">
-                          <p className="text-sm text-slate-600 mb-2">Debt Free In</p>
-                          <p className="text-5xl font-bold text-red-600">
-                            {debtResults.months}
-                          </p>
-                          <p className="text-lg text-slate-600">months</p>
-                          <p className="text-sm text-slate-500 mt-2">
-                            {formatDate(debtResults.payoffDate)}
-                          </p>
-                        </div>
-                      </div>
+                <label className="block text-sm font-medium mt-3">Interest rate (APR)</label>
+                <input type="number" step="0.01" value={debtInterest * 100} onChange={(e) => setDebtInterest(Number(e.target.value) / 100)} className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent" />
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <DollarSign className="w-4 h-4 text-slate-500" />
-                            <span className="text-sm text-slate-600">Total Paid</span>
-                          </div>
-                          <p className="text-xl font-bold text-slate-900">
-                            {formatCurrency(debtResults.totalPaid)}
-                          </p>
-                        </div>
+                <label className="block text-sm font-medium mt-3">Monthly minimum payment</label>
+                <input type="number" value={debtMonthly} onChange={(e) => setDebtMonthly(Number(e.target.value))} className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent" />
 
-                        <div className="bg-white border-2 border-slate-200 rounded-xl p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <ArrowRight className="w-4 h-4 text-red-500" />
-                            <span className="text-sm text-slate-600">Total Interest</span>
-                          </div>
-                          <p className="text-xl font-bold text-red-600">
-                            {formatCurrency(debtResults.totalInterest)}
-                          </p>
-                        </div>
-                      </div>
+                <label className="block text-sm font-medium mt-3">Extra monthly payment (optional)</label>
+                <input type="number" value={debtExtra} onChange={(e) => setDebtExtra(Number(e.target.value))} className="w-full p-2 rounded-md border border-slate-200 dark:border-slate-700 bg-transparent" />
+              </>
+            )}
 
-                      {parseFloat(extraPayment) > 0 && debtResults.monthsSaved > 0 && (
-                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
-                          <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                            <Zap className="w-5 h-5 text-green-500" />
-                            Impact of Extra Payments
-                          </h3>
-                          <div className="grid grid-cols-2 gap-4 text-center">
-                            <div>
-                              <p className="text-2xl font-bold text-green-600">{debtResults.monthsSaved}</p>
-                              <p className="text-sm text-slate-600">Months Saved</p>
-                            </div>
-                            <div>
-                              <p className="text-2xl font-bold text-green-600">
-                                {formatCurrency(debtResults.savingsWithExtra)}
-                              </p>
-                              <p className="text-sm text-slate-600">Interest Saved</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Motivational Message */}
-                      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-200">
-                        <div className="flex items-start gap-3">
-                          <Sparkles className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
-                          <p className="text-slate-800 font-medium">{debtResults.message}</p>
-                        </div>
-                      </div>
-
-                      {/* Share Button */}
-                      <button
-                        onClick={generateShareCard}
-                        className="w-full py-3 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Share2 className="w-5 h-5" />
-                        Share My Progress
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Debt Chart */}
-              {debtChartData.length > 0 && (
-                <div className="mt-8 pt-8 border-t-2 border-slate-200">
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6">Payoff Timeline</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={debtChartData}>
-                      <defs>
-                        <linearGradient id="colorDebt" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis 
-                        dataKey="month" 
-                        label={{ value: 'Months', position: 'insideBottom', offset: -5 }}
-                        stroke="#64748b"
-                      />
-                      <YAxis 
-                        stroke="#64748b"
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => formatCurrency(value)}
-                        labelFormatter={(month) => `Month ${month}`}
-                        contentStyle={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="balance" 
-                        stroke="#ef4444" 
-                        fillOpacity={1}
-                        fill="url(#colorDebt)"
-                        strokeWidth={2}
-                        name="Remaining Balance"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
+            {/* Calculate + clear */}
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={calculate}
+                className={`${primaryBtn} ${primaryBg}`}
+              >
+                <Sparkles size={16} /> Calculate
+              </button>
+              <button
+                onClick={() => {
+                  // simple reset to defaults
+                  setGoalName('My Goal');
+                  setGoalAmount(10000);
+                  setCurrentAmount(1000);
+                  setMonthlyContribution(200);
+                  setAnnualGrowth(0.05);
+                  setUseGrowth(true);
+                  setTargetDate(new Date().toISOString().slice(0, 10));
+                  setDebtBalance(5000);
+                  setDebtInterest(0.18);
+                  setDebtMonthly(150);
+                  setDebtExtra(0);
+                  setResults(null);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white text-slate-700 shadow-sm"
+              >
+                Reset
+              </button>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Hidden Canvas for Share Card */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-    </div>
+          {/* Right pane - results + chart */}
+          <div className="md:col-span-2 bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
+            {!results && (
+              <div className="p-6 text-center text-slate-500">
+                <p>Enter values and click Calculate to see results.</p>
+              </div>
+            )}
+
+            {results && (
+              <div>
+                {/* Top summary */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold">{mode === 'debt' ? 'Debt Summary' : goalName}</h2>
+                    <div className="text-sm text-slate-400">
+                      {mode === 'debt' ? `Remaining balance timeline` : `Estimated completion: ${formatDate(results.completionDate)} • ${results.months} months`}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 items-center">
+                    <div className="text-right">
+                      <div className="text-sm text-slate-400">Total contributions</div>
+                      <div className="font-medium">{mode === 'debt' ? money(results.totalContributions) : money(results.totalContributions)}</div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button onClick={generateShareImage} className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-100">
+                        <Share2 size={16} /> Download Share Image
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Motivational message + progress */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm text-slate-400">Progress</div>
+                      <div className="mt-1 text-lg font-semibold">{results.percentComplete ?? 0}%</div>
+                      <div className="text-xs text-slate-400"> {mode === 'debt' ? 'Amount remaining' : `Goal progress based on current balance`}</div>
+                    </div>
+                    <div className="flex-1">
+                      {/* progress bar */}
+                      <div className="h-4 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                        <div className="h-4 rounded-full bg-teal-400" style={{ width: `${results.percentComplete ?? 0}%` }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-sm text-slate-500">
+                    {mode === 'debt' ? (
+                      <>
+                        {results.months <= 1 ? (
+                          <span>You're almost done — one final payment left. Great work!</span>
+                        ) : (
+                          <span>At your current payments, you'll be debt-free in {results.months} months ({formatDate(results.completionDate)}).</span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {results.months <= 3 ? (
+                          <span>You're so close! A small boost can get you there faster.</span>
+                        ) : (
+                          <span>Keep it up — consistent contributions make this predictable.</span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chart */}
+                <div className="mt-6" style={{ height: 320 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={results.monthlySeries}>
+                      <CartesianGrid stroke={dark ? '#1f2937' : '#f1f5f9'} />
+                      <XAxis dataKey="date" tick={{ fill: dark ? '#cbd5e1' : '#475569' }} />
+                      <YAxis tickFormatter={(v) => `$${Math.round(v / 1000)}k`} tick={{ fill: dark ? '#cbd5e1' : '#475569' }} />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Series table (compact) */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                    <div className="text-xs text-slate-400">Completion Date</div>
+                    <div className="font-medium">{formatDate(results.completionDate)}</div>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                    <div className="text-xs text-slate-400">Months</div>
+                    <div className="font-medium">{results.months}</div>
+                  </div>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-md">
+                    <div className="text-xs text-slate-400">{mode === 'debt' ? 'Total Paid' : 'Total Savings'}</div>
+                    <div className="font-medium">{money(results.totalContributions + results.totalGrowth)}</div>
+                  </div>
+                </div>
+
+                {/* share preview (hidden) */}
+                <div className="hidden" ref={shareRef} aria-hidden>
+                  {/* This is used as the reference for canvas generation */}
+                  <div style={{ padding: 20, width: 1200, height: 630, background: dark ? '#0f172a' : '#ffffff' }}>
+                    <h2 style={{ color: dark ? '#e6eef8' : '#0b1b2b' }}>{goalName}</h2>
+                    <div style={{ color: dark ? '#9aa7b3' : '#475569' }}>{formatDate(results.completionDate)} — {results.months} months</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="mt-8 text-center text-sm text-slate-400">
+          <div>Built with ❤️ — share with friends if it helps.</div>
+        </footer>
+      </div>
+    </main>
   );
 }
